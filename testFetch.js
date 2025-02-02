@@ -1,4 +1,4 @@
-import { callTflStopPointsAPI, callJourneyPlannerAPIToStopPoint } from './apis.js';
+import { callTflStopPointsAPI, callJourneyPlannerAPIToStopPoint, callTflArrivalsAPI } from './apis.js';
 
 export function parsePostCodeAPIdata(postCodeAPIRawData) {
     const coords = {};
@@ -21,6 +21,12 @@ export function parseStopPointData(tflStopPointAPIRawData) {
     }));
 
     return stopPointData.sort((a,b)=>a.Distance-b.distance).slice(0,2);
+}
+
+export async function getBusArrivals(stopPointData, index) {
+    const arrivalRawData = await callTflArrivalsAPI(stopPointData[index].stopPoint);
+    const busStopArrivals = await parseBusArrivalData(arrivalRawData);
+    return busStopArrivals;
 }
 
 export async function parseBusArrivalData(arrivalData) {
