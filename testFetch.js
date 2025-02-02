@@ -1,59 +1,29 @@
-// Forked version@https://github.com/gosaurus/ForkedBusBoard.git
-import fetch from 'node-fetch';
-import readline from 'readline-sync';
+import { callTflStopPointsAPI, callJourneyPlannerAPIToStopPoint } from './apis.js';
 
-let postCode = "";
-
-async function fetchAPI(apiUrl) {
-    try {
-        const response = await fetch(apiUrl);
-        if (response.status !== 200) {
-            throw new Error(`API not responding ${response.status}.`);
-        }
-        else {
-            return await response.json();
-        }
-    }
-    catch(Error) {
-        console.error(`Error: ${Error}`);
-    }}
-
-function getPostCodeFromUser() {
-    try{
-        postCode = readline.question("Please enter your postcode: ").toUpperCase().trim();
-        const regex = /\b^(E|EC|N|NW|S|SW|SE|W|WC)[0-9]{1,2}\s?[0-9][A-Z]{2}\b/; // Include greater London
-        if (regex.test(postCode)) {
-            return postCode;
-        }
-        else {
-            throw new Error ("Invalid postcode.");
-        }
-    }
-    catch(Error){
-          console.error(`Error: ${Error}`);
-          getPostCodeFromUser();
-    }
-}
-
-function parsePostCodeAPIdata(postCodeAPIRawData) {
+export function parsePostCodeAPIdata(postCodeAPIRawData) {
     const coords = {};
     coords.longitude = postCodeAPIRawData.result.longitude;
     coords.latitude = postCodeAPIRawData.result.latitude;
     return coords;
 }
 
+export async function getStopPointsDetails() {
+    const tflStopPointAPIRawData = await callTflStopPointsAPI(); 
+    const stopPointParsedData = parseStopPointData(tflStopPointAPIRawData);
+    return stopPointParsedData;
+}
 
-function parseStopPointData(tFLStopPointAPIRawData) {
-   const stopPointData= tFLStopPointAPIRawData.stopPoints.map(busStop => ({
-        StopPoint:busStop.naptanId,
-        BusStop: busStop.commonName,
-        Distance: busStop.distance
+export function parseStopPointData(tflStopPointAPIRawData) {
+   const stopPointData= tflStopPointAPIRawData.stopPoints.map(busStop => ({
+        stopPoint: busStop.naptanId,
+        busStop: busStop.commonName,
+        distance: busStop.distance
     }));
 
     return stopPointData.sort((a,b)=>a.Distance-b.distance).slice(0,2);
 }
 
-async function parseBusArrivalData(arrivalData) {
+export async function parseBusArrivalData(arrivalData) {
     const busInfo = arrivalData.map(busDetails => ({
         Destination: busDetails.destinationName, 
         Route: busDetails.lineName,
@@ -62,7 +32,7 @@ async function parseBusArrivalData(arrivalData) {
     return busInfo.sort((a,b) => a.TimeToStation - b.TimeToStation).slice(0,5);
 }
 
-function formattedBusDetails(busStopArrival,busStopName) {
+export function displayBusArrivalDetails(busStopArrival,busStopName) {
     console.log(busStopName);
     busStopArrival.forEach((bus,index) => {
     console.log(`Bus ${index+1}`);
@@ -75,23 +45,6 @@ function formattedBusDetails(busStopArrival,busStopName) {
         }
     }});
     console.log(`\n`);
-}
-
-async function getStopPointsDetails() {
-
-    const postCodeAPIURL = "https://api.postcodes.io/postcodes/"+getPostCodeFromUser();
-    const postCodeAPIRawData = await fetchAPI(postCodeAPIURL);
-    const postCodeCoords = parsePostCodeAPIdata(postCodeAPIRawData);
-    const tFLStopPointsAPIURL = `https://api.tfl.gov.uk/StopPoint/?lat=${postCodeCoords.latitude}&lon=${postCodeCoords.longitude}&stopTypes=NaptanPublicBusCoachTram`;
-    const tFLStopPointAPIRawData = await fetchAPI(tFLStopPointsAPIURL);
-    const stopPointParsedData = parseStopPointData(tFLStopPointAPIRawData);
-    return stopPointParsedData;
-}
-
-async function getArrivalPredictions(busStopURL) {
-    const arrivalRawData = await fetchAPI(busStopURL);
-    const firstFiveBuses = await parseBusArrivalData(arrivalRawData);
-    return firstFiveBuses;
 }
 
 //Function to parse raw data from TFL Journey Planner API
@@ -107,7 +60,6 @@ async function parseTflJourneyPlannerRawData(tflJourneyPlannerRawData) {
     journeyLegs.flat().forEach((subObject) => {
         steps.push(subObject.instruction.steps);
     });
-
     steps.flat().forEach((subSubObject) => {
         direction.push(subSubObject.descriptionHeading);
         description.push(subSubObject.description);
@@ -129,33 +81,8 @@ function formatJourney(parsedData) {
     }
 }
 
-/* Part 3 */
- async function getJourneyToStopPoint(stopCode) {
-    const tflJourneyPlannerAPIURL = "https://api.tfl.gov.uk/Journey/JourneyResults/"+postCode+"/to/"+stopCode;
-    const tflJourneyPlannerRawData = await fetchAPI(tflJourneyPlannerAPIURL)
+export async function getJourneyToStopPoint(stopCode) {
+    const tflJourneyPlannerRawData = await callJourneyPlannerAPIToStopPoint(stopCode);
     const parsedData = await parseTflJourneyPlannerRawData(tflJourneyPlannerRawData);
     return formatJourney(parsedData);
  }
- 
-async function busBoard() {
-    const stopPointDetails = await getStopPointsDetails(); 
-    if (stopPointDetails.length === 0) {
-        console.log("No bus stops near your postcode.");
-    } else {
-        
-        for (let index = 0; index < 2; index++) {
-            const stopPoint = stopPointDetails[index].StopPoint;
-            const busStopURL="https://api.tfl.gov.uk/StopPoint/"+stopPoint+"/Arrivals";
-            const busStopName = stopPointDetails[index].BusStop;
-            const busStopArrival= await getArrivalPredictions(busStopURL);
-            if (busStopArrival.length === 0) {
-                console.log(`No buses currently due to arrive at ${stopPointDetails[index].BusStop}.`);
-            }
-            else { 
-                formattedBusDetails(busStopArrival,busStopName);
-                await getJourneyToStopPoint(stopPoint);
-            }
-        }
-    }}
-
-await busBoard();
