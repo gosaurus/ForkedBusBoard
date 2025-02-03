@@ -37,12 +37,12 @@ export async function callTflArrivalsAPI(stopPoint) {
     //const stopPoint = callTFLArrivalsAPI(stopPointDetails[index].StopPoint);
     const busStopURL="https://api.tfl.gov.uk/StopPoint/"+stopPoint+"/Arrivals";
     const arrivalRawData = await fetchAPI(busStopURL);
-    return arrivalRawData;
-}
+    return arrivalRawData; }
 
- export async function callJourneyPlannerAPIToStopPoint(stopCode) {
-    const tflJourneyPlannerAPIURL = "https://api.tfl.gov.uk/Journey/JourneyResults/"+postCode+"/to/"+stopCode;
-     console.log(`In callJourneyPlannerAPIToStopPoint function (apis.js). postcode = ${postCode}, stopcode = ${stopCode}`);
-    const tflJourneyPlannerRawData = await fetchAPI(tflJourneyPlannerAPIURL);
+ export async function callJourneyPlannerAPIToStopPoint(postCode, destination) {
+    // const tflJourneyPlannerAPIURL = "https://api.tfl.gov.uk/Journey/JourneyResults/"+postCode+"/to/"+destination;
+    const tempAPIresponse = "https://api.tfl.gov.uk/Journey/JourneyResults/SE167AR/to/NW71DN?mode=bus" 
+    console.log(`In callJourneyPlannerAPIToStopPoint function (apis.js). postcode = ${postCode}, stopcode = ${destination}`);
+    const tflJourneyPlannerRawData = await fetchAPI(tempAPIresponse);
     return tflJourneyPlannerRawData;
  }

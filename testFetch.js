@@ -74,6 +74,23 @@ async function parseTflJourneyPlannerRawData(tflJourneyPlannerRawData) {
     return {"direction":direction, "description":description};
 }
 
+export function parse(rawData) {
+    // const legs = [];
+    // legs.push(rawData.journeys);
+    // console.log(legs);
+    const legs = (rawData.journeys[0]["legs"]);
+    const instructions = [];
+    legs.forEach((object) => {
+        instructions.push(
+            [object["instruction"]["summary"],
+            object["instruction"]["detailed"],
+            object.departureTime, 
+            object.arrivalTime]
+        )
+    })
+    console.log(instructions)
+    }
+
 function formatJourney(parsedData) {
     const journey = [];
     const directions = parsedData.direction;
@@ -92,3 +109,4 @@ export async function getJourneyToStopPoint(stopCode) {
     const parsedData = await parseTflJourneyPlannerRawData(tflJourneyPlannerRawData);
     return formatJourney(parsedData);
  }
+
