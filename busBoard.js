@@ -1,4 +1,4 @@
-import { getStopPointsDetails, displayBusArrivalDetails, getBusArrivals, getJourneyToStopPoint, parse } from './testFetch.js';
+import { getStopPointsDetails, displayBusArrivalDetails, getBusArrivals, getJourneyToStopPoint } from './testFetch.js';
 import { getJourneyToDestination } from './journeyPlanner.js';
 
 export async function busBoard() {

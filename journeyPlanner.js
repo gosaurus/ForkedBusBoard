@@ -1,6 +1,6 @@
 import { callJourneyPlannerAPIToStopPoint } from './apis.js';
 import { getPostCodeFromUser } from './userInput.js';
-import { parse } from './testFetch.js';
+import { format} from './testFetch.js';
 
 export async function getJourneyToDestination() {
     //call for two postcodes
@@ -9,5 +9,5 @@ export async function getJourneyToDestination() {
     //
     const JourneyPlannerRawDataResponse = await callJourneyPlannerAPIToStopPoint(startPoint, destination);
     //call something in testFetch to parse
-    parse(JourneyPlannerRawDataResponse);
+    format(JourneyPlannerRawDataResponse);
 }
