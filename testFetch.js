@@ -73,23 +73,43 @@ async function parseTflJourneyPlannerRawData(tflJourneyPlannerRawData) {
     
     return {"direction":direction, "description":description};
 }
-
-export function parse(rawData) {
-    // const legs = [];
-    // legs.push(rawData.journeys);
-    // console.log(legs);
+function parse(rawData) {
     const legs = (rawData.journeys[0]["legs"]);
     const instructions = [];
     legs.forEach((object) => {
-        instructions.push(
-            [object["instruction"]["summary"],
-            object["instruction"]["detailed"],
-            object.departureTime, 
-            object.arrivalTime]
-        )
+        instructions.push([
+            {summary: object["instruction"]["summary"],
+            detailed: object["instruction"]["detailed"],
+            departureTime: object.departureTime,
+            arrivalTime: object.arrivalTime}
+        ])
     })
-    console.log(instructions)
+    console.log(instructions);
+    return instructions;
     }
+
+export function format(rawData) {
+    const instructionsList = parse(rawData);
+    // const innerInstructionsList = instructionsList[0];
+    // console.log("Inner Instruction List \n", innerInstructionsList);
+    instructionsList.forEach((instructionsInnerArray) => { //exposes each inner array of objects
+        instructionsInnerArray.forEach((instruction) => { //for each inner object
+        // console.log(instruction["summary"]);
+        console.log(instruction);
+        const summary = instruction["summary"];
+        const detailed = instruction["detailed"];
+        if (summary === detailed) {
+            console.log(detailed);
+        }
+        else {
+            const regex = /(to|towards)\s{1}([\w\s\d/]+)/;
+            // const regex = /(?:to|towards)\s{1}([\w\d\s/]+)/;
+            const matchedInstruction = summary.match(regex);
+            console.log(`Board the ${detailed}; get off at ${matchedInstruction[2]}.`);
+        }
+    })
+    })
+}
 
 function formatJourney(parsedData) {
     const journey = [];
