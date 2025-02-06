@@ -1,5 +1,4 @@
 import fetch from 'node-fetch';
-import { getPostCodeFromUser, postCode } from './userInput.js';
 import { parsePostCodeAPIdata } from './testFetch.js';
 
 async function fetchAPI(apiUrl) {
@@ -17,15 +16,15 @@ async function fetchAPI(apiUrl) {
     }
 }
 
-async function getPostcodeLatLong () {
-    const postCodeAPIURL = "https://api.postcodes.io/postcodes/"+getPostCodeFromUser();
+async function getPostcodeLatLong (postCode) {
+    const postCodeAPIURL = "https://api.postcodes.io/postcodes/"+postCode;
     const postCodeAPIRawData = await fetchAPI(postCodeAPIURL);
     const coords = parsePostCodeAPIdata(postCodeAPIRawData);
     return coords;
 }
 
-export async function callTflStopPointsAPI() {
-    const coords = await getPostcodeLatLong();
+export async function callTflStopPointsAPI(postCode) {
+    const coords = await getPostcodeLatLong(postCode);
     const tflStopPointsAPIURL = `https://api.tfl.gov.uk/StopPoint/?lat=`+
         `${coords.latitude}&lon=${coords.longitude}`+
         `&stopTypes=NaptanPublicBusCoachTram`;
@@ -34,15 +33,19 @@ export async function callTflStopPointsAPI() {
 }
 
 export async function callTflArrivalsAPI(stopPoint) {
-    //const stopPoint = callTFLArrivalsAPI(stopPointDetails[index].StopPoint);
     const busStopURL="https://api.tfl.gov.uk/StopPoint/"+stopPoint+"/Arrivals";
     const arrivalRawData = await fetchAPI(busStopURL);
     return arrivalRawData; }
 
- export async function callJourneyPlannerAPIToStopPoint(postCode, destination) {
-    // const tflJourneyPlannerAPIURL = "https://api.tfl.gov.uk/Journey/JourneyResults/"+postCode+"/to/"+destination;
-    const tempAPIresponse = "https://api.tfl.gov.uk/Journey/JourneyResults/SE167AR/to/NW71DN?mode=bus" 
+ export async function callJourneyPlannerAPIToStopPoint(stopCode, postCode) {
+    const tflJourneyPlannerAPIURL = "https://api.tfl.gov.uk/Journey/JourneyResults/"+postCode+"/to/"+stopCode;
+    const tflJourneyPlannerRawData = await fetchAPI(tflJourneyPlannerAPIURL);
+    return tflJourneyPlannerRawData;
+ }
+
+ export async function callJourneyPlannerAPIWithDestination(postCode, destination) {
+    const tflJourneyPlannerAPIURL = "https://api.tfl.gov.uk/Journey/JourneyResults/"+postCode+"/to/"+destination+"?mode=bus";
     console.log(`In callJourneyPlannerAPIToStopPoint function (apis.js). postcode = ${postCode}, stopcode = ${destination}`);
-    const tflJourneyPlannerRawData = await fetchAPI(tempAPIresponse);
+    const tflJourneyPlannerRawData = await fetchAPI(tflJourneyPlannerAPIURL);
     return tflJourneyPlannerRawData;
  }

@@ -7,8 +7,8 @@ export function parsePostCodeAPIdata(postCodeAPIRawData) {
     return coords;
 }
 
-export async function getStopPointsDetails() {
-    const tflStopPointAPIRawData = await callTflStopPointsAPI(); 
+export async function getStopPointsDetails(postCode) {
+    const tflStopPointAPIRawData = await callTflStopPointsAPI(postCode); 
     const stopPointParsedData = parseStopPointData(tflStopPointAPIRawData);
     return stopPointParsedData;
 }
@@ -19,7 +19,6 @@ export function parseStopPointData(tflStopPointAPIRawData) {
         busStop: busStop.commonName,
         distance: busStop.distance
     }));
-
     return stopPointData.sort((a,b)=>a.Distance-b.distance).slice(0,2);
 }
 
@@ -54,7 +53,6 @@ export function displayBusArrivalDetails(busStopArrival,busStopName) {
 }
 
 //Function to parse raw data from TFL Journey Planner API
-
 async function parseTflJourneyPlannerRawData(tflJourneyPlannerRawData) {
     const journeyLegs = [];
     const steps = [];
@@ -73,43 +71,36 @@ async function parseTflJourneyPlannerRawData(tflJourneyPlannerRawData) {
     
     return {"direction":direction, "description":description};
 }
+
 function parse(rawData) {
-    const legs = (rawData.journeys[0]["legs"]);
-    const instructions = [];
-    legs.forEach((object) => {
-        instructions.push([
-            {summary: object["instruction"]["summary"],
-            detailed: object["instruction"]["detailed"],
-            departureTime: object.departureTime,
-            arrivalTime: object.arrivalTime}
-        ])
-    })
-    console.log(instructions);
+    const legs = (rawData.journeys[0].legs);
+    const instructions = legs.map((leg) => ({
+        summary: leg.instruction.summary,
+        detailed: leg.instruction.detailed,
+        departureTime: leg.departureTime,
+        arrivalTime: leg.arrivalTime
+    }));
+    console.log("Mapped instructions \n",instructions);
     return instructions;
     }
 
 export function format(rawData) {
     const instructionsList = parse(rawData);
-    // const innerInstructionsList = instructionsList[0];
-    // console.log("Inner Instruction List \n", innerInstructionsList);
-    instructionsList.forEach((instructionsInnerArray) => { //exposes each inner array of objects
-        instructionsInnerArray.forEach((instruction) => { //for each inner object
-        // console.log(instruction["summary"]);
+    instructionsList.forEach((instruction, index) => { 
         console.log(instruction);
         const summary = instruction["summary"];
         const detailed = instruction["detailed"];
         if (summary === detailed) {
-            console.log(detailed);
+            console.log(`${index}. ${detailed}`);
         }
         else {
             const regex = /(to|towards)\s{1}([\w\s\d/]+)/;
-            // const regex = /(?:to|towards)\s{1}([\w\d\s/]+)/;
             const matchedInstruction = summary.match(regex);
-            console.log(`Board the ${detailed}; get off at ${matchedInstruction[2]}.`);
+            console.log(`${index}. Board the ${detailed}; disembark at ${matchedInstruction[2]}.`);
         }
     })
-    })
-}
+    }
+
 
 function formatJourney(parsedData) {
     const journey = [];
@@ -119,13 +110,13 @@ function formatJourney(parsedData) {
         journey.push(`${directions[i]} ${description[i]} `);
     }
     console.log(`Directions:`);
-    for(let steps in journey){
+    for (let steps in journey){
         console.log(`${parseInt(steps)+1}: ${journey[steps]}`);
     }
 }
 
-export async function getJourneyToStopPoint(stopCode) {
-    const tflJourneyPlannerRawData = await callJourneyPlannerAPIToStopPoint(stopCode);
+export async function getJourneyToStopPoint(stopCode, postCode) {
+    const tflJourneyPlannerRawData = await callJourneyPlannerAPIToStopPoint(stopCode, postCode);
     const parsedData = await parseTflJourneyPlannerRawData(tflJourneyPlannerRawData);
     return formatJourney(parsedData);
  }
