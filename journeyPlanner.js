@@ -1,4 +1,4 @@
-import { callJourneyPlannerAPIToStopPoint, callJourneyPlannerAPIWithDestination } from './apis.js';
+import { callJourneyPlannerAPIWithDestination } from './apis.js';
 import { getPostCodeFromUser } from './userInput.js';
 import { format} from './testFetch.js';
 

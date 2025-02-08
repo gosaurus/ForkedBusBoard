@@ -80,14 +80,12 @@ function parse(rawData) {
         departureTime: leg.departureTime,
         arrivalTime: leg.arrivalTime
     }));
-    console.log("Mapped instructions \n",instructions);
     return instructions;
     }
 
 export function format(rawData) {
     const instructionsList = parse(rawData);
     instructionsList.forEach((instruction, index) => { 
-        console.log(instruction);
         const summary = instruction["summary"];
         const detailed = instruction["detailed"];
         if (summary === detailed) {
