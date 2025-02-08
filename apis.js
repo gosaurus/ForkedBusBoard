@@ -45,7 +45,6 @@ export async function callTflArrivalsAPI(stopPoint) {
 
  export async function callJourneyPlannerAPIWithDestination(postCode, destination) {
     const tflJourneyPlannerAPIURL = "https://api.tfl.gov.uk/Journey/JourneyResults/"+postCode+"/to/"+destination+"?mode=bus";
-    console.log(`In callJourneyPlannerAPIToStopPoint function (apis.js). postcode = ${postCode}, stopcode = ${destination}`);
     const tflJourneyPlannerRawData = await fetchAPI(tflJourneyPlannerAPIURL);
     return tflJourneyPlannerRawData;
  }
